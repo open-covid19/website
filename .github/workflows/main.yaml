@@ -1,0 +1,32 @@
+name: Build and Deploy
+on:
+  # every day
+  # schedule: 
+    # - cron: '0 0 * * *'
+  # or on push
+  push:
+    branches:
+    - master
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: "12.x"
+    - uses: actions/cache@v1
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+    - run: npm install
+      if: steps.cache.outputs.cache-hit != 'true'
+    - run: npm run build
+    - name: Deploy to Firebase
+      uses: lowply/deploy-firebase@v0.0.2
+      env:
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        FIREBASE_PROJECT: covid19-270622
